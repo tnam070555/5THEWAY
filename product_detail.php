@@ -28,7 +28,7 @@ if (!$product) {
     <style>
         /* CHỈNH AVATAR NHỎ LẠI GIỐNG TRANG CHỦ */
         .avatar-header-img {
-            width: 35px;  /* Kích thước giống index.php */
+            width: 35px;
             height: 35px;
             border-radius: 50%;
             object-fit: cover;
@@ -39,7 +39,7 @@ if (!$product) {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 35px; /* Khung chứa cũng thu nhỏ lại */
+            width: 35px;
             height: 35px;
         }
 
@@ -51,30 +51,88 @@ if (!$product) {
             display: flex;
             gap: 50px;
         }
-        .detail-left { flex: 1.2; }
-        .detail-left img {
+        .detail-left { flex: 1.2; display: flex; flex-direction: column; gap: 20px; }
+        
+        /* --- CSS MỚI CHO GALLERY VÀ ZOOM ẢNH --- */
+        .product-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .main-image-wrapper {
             width: 100%;
             aspect-ratio: 4 / 3;
-            object-fit: cover;
+            overflow: hidden;
             border: 1px solid #eee;
+            background: #f9f9f9;
+            cursor: zoom-in;
+            position: relative;
+            border-radius: 8px; /* Bo góc nhẹ cho chuyên nghiệp */
         }
+
+        .main-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s ease-out; /* Mượt mà khi nhả chuột */
+        }
+
+        .main-image-wrapper:hover img {
+            transform: scale(2.2); /* Độ phóng to khi zoom */
+            transition: none; /* Tắt transition khi di chuyển chuột để theo sát tọa độ */
+        }
+
+        .thumbnail-list {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        /* Tùy chỉnh thanh cuộn cho thumbnail */
+        .thumbnail-list::-webkit-scrollbar { height: 5px; }
+        .thumbnail-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+        .thumb-item {
+            width: 85px;
+            height: 85px;
+            border-radius: 6px;
+            border: 2px solid transparent;
+            overflow: hidden;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            background: #f9f9f9;
+        }
+
+        .thumb-item:hover { opacity: 1; }
+        .thumb-item.active { border-color: #000; opacity: 1; }
+        .thumb-item img { width: 100%; height: 100%; object-fit: cover; }
+        /* ------------------------------------- */
+
         .detail-right { flex: 1; display: flex; flex-direction: column; gap: 20px; }
         .product-name { font-size: 32px; font-weight: 900; text-transform: uppercase; margin: 0; }
         .product-price { font-size: 24px; font-weight: 700; color: #000; }
         .option-label { font-size: 11px; font-weight: 900; text-transform: uppercase; color: #888; margin-bottom: 8px; display: block; }
         .option-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        .option-item { border: 1px solid #ddd; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .option-item { border: 1px solid #ddd; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s; }
         .option-item.active { background: #000; color: #fff; border-color: #000; }
         .quantity-control { display: flex; align-items: center; border: 1px solid #ddd; width: fit-content; }
-        .qty-btn { padding: 10px 15px; border: none; background: #fff; cursor: pointer; font-weight: bold; }
+        .qty-btn { padding: 10px 15px; border: none; background: #fff; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .qty-btn:hover { background: #f0f0f0; }
         .qty-input { width: 45px; text-align: center; border: none; font-weight: 700; font-size: 16px; }
-        .buy-actions { display: flex; flex-direction: column; gap: 10px; }
-        .btn-add { background: #fff; color: #000; border: 2px solid #000; padding: 18px; font-weight: 900; text-align: center; text-decoration: none; }
-        .btn-buy-now { background: #000; color: #fff; border: 2px solid #000; padding: 18px; font-weight: 900; text-align: center; text-decoration: none; }
+        
+        .buy-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 10px;}
+        .btn-add { background: #fff; color: #000; border: 2px solid #000; padding: 18px; font-weight: 900; text-align: center; text-decoration: none; transition: 0.3s; }
+        .btn-add:hover { background: #f5f5f5; }
+        .btn-buy-now { background: #000; color: #fff; border: 2px solid #000; padding: 18px; font-weight: 900; text-align: center; text-decoration: none; transition: 0.3s; }
+        .btn-buy-now:hover { background: #222; }
 
-        /* CSS CHO PHẦN MÔ TẢ SẢN PHẨM MỚI THÊM */
+        /* CSS CHO PHẦN MÔ TẢ SẢN PHẨM */
         .product-description { 
-            margin-top: 40px; 
+            margin-top: 20px; 
             padding-top: 20px;
         }
         .desc-title { 
@@ -91,6 +149,11 @@ if (!$product) {
             color: #444; 
             line-height: 1.8; 
             font-weight: 400;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .detail-container { flex-direction: column; }
         }
     </style>
 </head>
@@ -176,22 +239,41 @@ if (!$product) {
 
     <div class="detail-container">
         <div class="detail-left">
-            <img src="assets/img/<?php echo $product['HinhAnh']; ?>" onerror="this.src='https://via.placeholder.com/800x600?text=5THEWAY'">
+            <div class="product-gallery">
+                <div class="main-image-wrapper" id="image-zoomer">
+                    <img src="assets/img/<?php echo $product['HinhAnh']; ?>" id="main-img" onerror="this.src='https://via.placeholder.com/800x600?text=5THEWAY'">
+                </div>
+                
+                <div class="thumbnail-list">
+                    <div class="thumb-item active" onclick="changeMainImage(this, 'assets/img/<?php echo $product['HinhAnh']; ?>')">
+                        <img src="assets/img/<?php echo $product['HinhAnh']; ?>" onerror="this.src='https://via.placeholder.com/80x80?text=5THEWAY'">
+                    </div>
+                    
+                    <div class="thumb-item" onclick="changeMainImage(this, 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800')">
+                        <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=150" alt="Góc khác">
+                    </div>
+                    <div class="thumb-item" onclick="changeMainImage(this, 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&q=80&w=800')">
+                        <img src="https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&q=80&w=150" alt="Chi tiết vải">
+                    </div>
+                    <div class="thumb-item" onclick="changeMainImage(this, 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=800')">
+                        <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=150" alt="Mặt sau">
+                    </div>
+                </div>
+            </div>
             
             <div class="product-description">
-                <div class="desc-title">Mô tả sản phẩm</div>
+                <div class="desc-title">Mô tả chi tiết</div>
                 <div class="desc-content">
                     <?php 
-                        // Kiểm tra xem cột MoTa có dữ liệu không
                         if (isset($product['MoTa']) && trim($product['MoTa']) !== '') {
-                            echo nl2br($product['MoTa']); // nl2br giúp giữ nguyên các dòng ngắt đoạn (enter) từ database
+                            echo nl2br($product['MoTa']); 
                         } else {
-                            echo "Đang cập nhật thông tin chi tiết cho sản phẩm này...";
+                            echo "The 5THEWAY® Global Edition. Chất liệu cotton 100% thoáng mát, form dáng oversized hiện đại phù hợp cho mọi hoạt động streetwear. Sản phẩm được thiết kế và hoàn thiện tỉ mỉ từng đường kim mũi chỉ.";
                         }
                     ?>
                 </div>
             </div>
-            </div>
+        </div>
         
         <div class="detail-right">
             <div>
@@ -234,17 +316,51 @@ if (!$product) {
     </div>
 
     <script>
+        // Xử lý tăng giảm số lượng
         function updateQty(step) {
             let input = document.getElementById('p-qty');
             let val = parseInt(input.value) + step;
             if (val >= 1) input.value = val;
         }
+
+        // Đổi màu / size active
         document.querySelectorAll('.option-item').forEach(item => {
             item.addEventListener('click', function() {
                 this.parentElement.querySelector('.active').classList.remove('active');
                 this.classList.add('active');
             });
         });
+
+        // --- SCRIPT XỬ LÝ ZOOM VÀ ĐỔI ẢNH GALLERY ---
+        const zoomer = document.getElementById('image-zoomer');
+        const mainImg = document.getElementById('main-img');
+
+        // Hàm tính tọa độ chuột và di chuyển tiêu điểm ảnh zoom
+        zoomer.addEventListener('mousemove', function(e) {
+            const { left, top, width, height } = zoomer.getBoundingClientRect();
+            const x = (e.clientX - left) / width * 100;
+            const y = (e.clientY - top) / height * 100;
+            
+            // Set tọa độ tâm của transform
+            mainImg.style.transformOrigin = `${x}% ${y}%`;
+        });
+
+        // Trả ảnh về giữa khi chuột rời khỏi khung
+        zoomer.addEventListener('mouseleave', function() {
+            mainImg.style.transformOrigin = 'center center';
+        });
+
+        // Hàm đổi ảnh khi nhấn vào thumbnail
+        function changeMainImage(element, newSrc) {
+            // Thay đổi src của ảnh chính
+            mainImg.src = newSrc;
+            
+            // Xóa active các thumbnail khác và thêm active cho ảnh vừa click
+            document.querySelectorAll('.thumb-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
     </script>
 </body>
 </html>
