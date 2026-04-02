@@ -10,13 +10,13 @@ if (!isset($_SESSION['user_admin'])) {
 
 // 2. LẤY THÔNG TIN SẢN PHẨM CẦN SỬA
 if (!isset($_GET['id'])) {
-    header('Location: product.php');
+    header('Location: products.php');
     exit();
 }
 
 $id = mysqli_real_escape_string($conn, $_GET['id']);
-// Query lấy cả tên loại để hiển thị nếu cần
-$sql = "SELECT * FROM SANPHAM WHERE MaSP = '$id'";
+// Lấy thông tin sản phẩm
+$sql = "SELECT * FROM SANPHAM WHERE MaSP = '$id'"; 
 $res = mysqli_query($conn, $sql);
 $data = mysqli_fetch_assoc($res);
 
@@ -40,6 +40,7 @@ if (isset($_POST['btn_update'])) {
         move_uploaded_file($_FILES['hinh_anh']['tmp_name'], "../assets/img/" . $hinh);
     }
 
+    // UPDATE CÓ THÊM CỘT NgayCapNhat
     $sql_update = "UPDATE SANPHAM SET 
                     TenSP = '$ten', 
                     GiaNiemYet = '$gia', 
@@ -47,11 +48,25 @@ if (isset($_POST['btn_update'])) {
                     Size = '$size', 
                     MoTa = '$mota', 
                     MaLoai = '$loai', 
-                    HinhAnh = '$hinh' 
+                    HinhAnh = '$hinh',
+                    NgayCapNhat = NOW() 
                   WHERE MaSP = '$id'";
 
     if (mysqli_query($conn, $sql_update)) {
-        header("Location: product.php?status=updated");
+        
+        // --- THÊM LỊCH SỬ HOẠT ĐỘNG ---
+        // Giả sử session 'user_admin' đang lưu MaNV của người đăng nhập
+        $ma_nv = $_SESSION['user_admin']; 
+        $hanh_dong = "Cập nhật sản phẩm";
+        $chi_tiet = "Sửa thông tin sản phẩm có mã: $id";
+        
+        // Dùng đúng tên bảng lichsu_hoatdong (có gạch dưới)
+        $sql_log = "INSERT INTO lichsu_hoatdong (MaNV, HanhDong, ThoiGian, ChiTiet) 
+                    VALUES ('$ma_nv', '$hanh_dong', NOW(), '$chi_tiet')";
+        mysqli_query($conn, $sql_log);
+        // ------------------------------
+
+        header("Location: products.php?status=updated");
         exit();
     } else {
         $msg = "Lỗi: " . mysqli_error($conn);
@@ -144,7 +159,7 @@ if (isset($_POST['btn_update'])) {
     <main class="main">
         <div class="header-flex">
             <h1>Cập nhật sản phẩm</h1>
-            <a href="product.php" class="back-btn"><i class="fa-solid fa-chevron-left"></i> QUAY LẠI</a>
+            <a href="products.php" class="back-btn"><i class="fa-solid fa-chevron-left"></i> QUAY LẠI</a>
         </div>
 
         <form method="POST" enctype="multipart/form-data">
